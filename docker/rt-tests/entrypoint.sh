@@ -2,7 +2,7 @@
 source /opt/ros/humble/setup.bash
 source /ros2_ws/install/setup.bash
 
-CMD="${1:-cyclictest}"
+CMD="${CMD:-cyclictest}"
 
 PUBLISH_EVENT() {
     local PHASE=$1
@@ -18,23 +18,28 @@ PUBLISH_EVENT() {
     }"
 }
 
+# 테스트 인자 환경 변수에서 가져오기
+CYCLICTEST_ARGS="${CYCLICTEST_ARGS:--l 10000 -i 1000 --json=/output/cyclictest_result.json}"
+PISTRESS_ARGS="${PISTRESS_ARGS:--g 8 -i 100000}"
+SIGNALTEST_ARGS="${SIGNALTEST_ARGS:--p 30 -l 100}"
+
 case "$CMD" in
     cyclictest)
         PUBLISH_EVENT start cyclictest
-        cyclictest -l 1000000 -i 1000 --json=/output/cyclictest_result.json
+        cyclictest $CYCLICTEST_ARGS
         PUBLISH_EVENT done cyclictest
         ;;
     pistress)
         PUBLISH_EVENT start pistress
-        pi_stress -g 8 -i 100000
+        pi_stress $PISTRESS_ARGS
         PUBLISH_EVENT done pistress
         ;;
     signaltest)
         PUBLISH_EVENT start signaltest
-        signaltest -p 30 -l 100
+        signaltest $SIGNALTEST_ARGS
         PUBLISH_EVENT done signaltest
         ;;
     *)
-        echo "[ERROR] Unknown command"
+        echo "[ERROR] Unknown command: $CMD"
         ;;
 esac
