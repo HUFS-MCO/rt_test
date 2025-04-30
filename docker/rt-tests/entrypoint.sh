@@ -2,8 +2,6 @@
 source /opt/ros/humble/setup.bash
 source /ros2_ws/install/setup.bash
 
-CMD="${CMD:-cyclictest}"
-
 PUBLISH_EVENT() {
     local PHASE=$1
     local TEST_NAME=$2
@@ -18,28 +16,20 @@ PUBLISH_EVENT() {
     }"
 }
 
-# 테스트 인자 환경 변수에서 가져오기
-CYCLICTEST_ARGS="${CYCLICTEST_ARGS:--l 10000 -i 1000 --json=/output/cyclictest_result.json}"
-PISTRESS_ARGS="${PISTRESS_ARGS:--g 8 -i 100000}"
-SIGNALTEST_ARGS="${SIGNALTEST_ARGS:--p 30 -l 100}"
+RUN_TEST() {
+    local CMD=$1
+    local ARGS_VAR_NAME=$2
+    local ARGS=${!ARGS_VAR_NAME}
 
-case "$CMD" in
-    cyclictest)
-        PUBLISH_EVENT start cyclictest
-        cyclictest $CYCLICTEST_ARGS
-        PUBLISH_EVENT done cyclictest
-        ;;
-    pistress)
-        PUBLISH_EVENT start pistress
-        pi_stress $PISTRESS_ARGS
-        PUBLISH_EVENT done pistress
-        ;;
-    signaltest)
-        PUBLISH_EVENT start signaltest
-        signaltest $SIGNALTEST_ARGS
-        PUBLISH_EVENT done signaltest
-        ;;
-    *)
-        echo "[ERROR] Unknown command: $CMD"
-        ;;
-esac
+    PUBLISH_EVENT start $CMD
+    $CMD $ARGS
+    PUBLISH_EVENT done $CMD
+}
+
+if [ "$CMD" == "all" ]; then
+    RUN_TEST cyclictest CYCLICTEST_ARGS
+    RUN_TEST pi_stress PISTRESS_ARGS
+    RUN_TEST signaltest SIGNALTEST_ARGS
+else
+    RUN_TEST $CMD ${CMD^^}_ARGS
+fi
