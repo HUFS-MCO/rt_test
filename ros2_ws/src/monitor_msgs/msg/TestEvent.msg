@@ -1,0 +1,3 @@
+builtin_interfaces/Time timestamp
+string phase
+string test_name
